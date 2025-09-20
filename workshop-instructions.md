@@ -10,12 +10,14 @@ In this workshop, you will participate in a role-playing game to gain first-hand
 
 ### Format
 
+- Before workshop: students should gain access to LLM coding tools
 - Intro: 10 minutes talk that motivates vibe coding, outlining its short-coming, and highlights its advantage in prototyping.
 - Demo: 10 minutes live demo of the main activity, done by TAs or instructors
 - Main activity: 35 minutes - 1 hour
   - Round One: 15 minutes. People with more LLM coding experience should play the roles of the AI (see role guide)
   - Round Two: 15 minutes. Rotate the roles to allow people to play roles they are less familiar with.
 - Show and tell: 5 - 20 minutes, allow at least 3 mintues per group
+- After workshop: survey to gauge learning and collect feedback
 
 ### Group Objective
 
