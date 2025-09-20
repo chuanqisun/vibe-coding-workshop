@@ -7,6 +7,7 @@ In this workshop, you will participate in a role-playing game to gain first-hand
 3. Allow more experienced students to teach less experienced students
 4. Inspire curiosity around technology
 5. Faciliate group formation
+6. Practice "dialogic" prompting mindset
 
 ### Format
 
