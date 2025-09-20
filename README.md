@@ -1,6 +1,8 @@
+# Vibe Coding Worshop
+
 In this workshop, you will participate in a role-playing game to gain first-hand experience designing with generative AI.
 
-### Learning goals
+## Learning goals
 
 1. Understanding the concept of prompting
 2. Become familiar with the current vibe coding practice
@@ -9,7 +11,7 @@ In this workshop, you will participate in a role-playing game to gain first-hand
 5. Faciliate group formation
 6. Practice "dialogic" prompting mindset
 
-### Format
+## Format
 
 - Before workshop: students should gain access to LLM coding tools
 - Intro: 10 minutes talk that motivates vibe coding, outlining its short-coming, and highlights its advantage in prototyping.
@@ -20,7 +22,7 @@ In this workshop, you will participate in a role-playing game to gain first-hand
 - Show and tell: 5 - 20 minutes, allow at least 3 mintues per group
 - After workshop: survey to gauge learning and collect feedback
 
-### Group Objective
+## Group Objective
 
 Work together to simulate a human-AI vibe coding session where the human uses AI to build a website about their award winning design project.
 
@@ -30,7 +32,7 @@ The end result can be:
 2. Chat transcript
 3. Screenshot for apps built with VSCode, Cursor
 
-### Group Formation
+## Group Formation
 
 Players: 2-5 people per group. The recommended group size is 4-5 people.
 
@@ -42,7 +44,7 @@ Make sure your group has at least one person with LLM coding experience. If your
 - **Player 4: You are Google Chrome.** Acts as the AI's ability to browse the web.
 - **Player 5: You are Code editor.** Acts as the AI's ability to write and edit code. This person controls an AI coding tool. LLM coding experience recommended.
 
-### Role Guide
+## Role Guide
 
 **Player 1: You are you**
 
@@ -81,6 +83,6 @@ Make sure your group has at least one person with LLM coding experience. If your
   - Use any AI code editor you are familiar with
   - Share your screen with other players, including the human
 
-### Breaking the Fourth Wall
+## Breaking the Fourth Wall
 
 If the group gets stuck, it’s okay to break the fourth wall. Step out of your character, discuss with your group, and help each other get back on track.
