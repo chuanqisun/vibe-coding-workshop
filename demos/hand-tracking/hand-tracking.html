@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hand Tracking Demo</title>
+  </head>
+  <body>
+    <h1>Hand Tracking Demo</h1>
+    <div id="container">
+      <video id="video" width="640" height="480" autoplay muted></video>
+      <canvas id="canvas" width="640" height="480"></canvas>
+    </div>
+    <div id="status">Initializing...</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <script>
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const status = document.getElementById("status");
+
+      // Position canvas over video
+      canvas.style.position = "absolute";
+      canvas.style.left = video.offsetLeft + "px";
+      canvas.style.top = video.offsetTop + "px";
+      video.style.position = "relative";
+
+      function onResults(results) {
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw hand landmarks if detected
+        if (results.multiHandLandmarks) {
+          for (const landmarks of results.multiHandLandmarks) {
+            // Draw connections
+            drawConnectors(ctx, landmarks, HAND_CONNECTIONS, {
+              color: "#00FF00",
+              lineWidth: 2,
+            });
+
+            // Draw landmarks
+            drawLandmarks(ctx, landmarks, {
+              color: "#FF0000",
+              lineWidth: 1,
+              radius: 3,
+            });
+          }
+          status.textContent = `Hands detected: ${results.multiHandLandmarks.length}`;
+        } else {
+          status.textContent = "No hands detected";
+        }
+      }
+
+      // Initialize MediaPipe Hands
+      const hands = new Hands({
+        locateFile: (file) => {
+          return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+        },
+      });
+
+      hands.setOptions({
+        maxNumHands: 2,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+      });
+
+      hands.onResults(onResults);
+
+      // Initialize camera
+      const camera = new Camera(video, {
+        onFrame: async () => {
+          await hands.send({ image: video });
+        },
+        width: 640,
+        height: 480,
+      });
+
+      // Start camera with error handling
+      camera
+        .start()
+        .then(() => {
+          status.textContent = "Camera started - show your hands!";
+        })
+        .catch((error) => {
+          console.error("Error accessing camera:", error);
+          status.textContent = "Error: Could not access camera. Please ensure camera permissions are granted.";
+
+          // Additional error handling for common issues
+          if (error.name === "NotAllowedError") {
+            status.textContent = "Error: Camera access denied. Please allow camera access and refresh the page.";
+          } else if (error.name === "NotFoundError") {
+            status.textContent = "Error: No camera found. Please connect a camera and refresh the page.";
+          }
+        });
+    </script>
+  </body>
+</html>
