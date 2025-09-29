@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web Speech API Demo</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 30px;
+      }
+
+      .controls {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      #recordButton {
+        background: linear-gradient(145deg, #4caf50, #45a049);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        font-size: 18px;
+        border-radius: 50px;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+        user-select: none;
+      }
+
+      #recordButton:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      #recordButton:active,
+      #recordButton.recording {
+        background: linear-gradient(145deg, #f44336, #da190b);
+        transform: translateY(0);
+      }
+
+      .instructions {
+        text-align: center;
+        color: #666;
+        margin-bottom: 20px;
+        font-size: 14px;
+      }
+
+      #output {
+        background: #f9f9f9;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        min-height: 150px;
+        font-size: 16px;
+        line-height: 1.6;
+        color: #333;
+        white-space: pre-wrap;
+      }
+
+      .status {
+        text-align: center;
+        margin-top: 15px;
+        font-weight: bold;
+        color: #666;
+      }
+
+      .status.recording {
+        color: #f44336;
+      }
+
+      .status.playing {
+        color: #2196f3;
+      }
+
+      .error {
+        background: #ffebee;
+        color: #c62828;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Web Speech API Demo</h1>
+
+      <div class="error" id="errorMessage"></div>
+
+      <div class="instructions">
+        Hold the button below or press and hold the spacebar to record your voice.
+        <br />
+        Release to stop recording and hear the playback.
+      </div>
+
+      <div class="controls">
+        <button id="recordButton">🎤 Hold to Record</button>
+      </div>
+
+      <div class="status" id="status">Ready to record</div>
+
+      <div id="output">Your transcribed speech will appear here...</div>
+    </div>
+
+    <script>
+      class SpeechRecognitionApp {
+        constructor() {
+          this.recognition = null;
+          this.synthesis = window.speechSynthesis;
+          this.isRecording = false;
+          this.accumulatedText = "";
+
+          this.recordButton = document.getElementById("recordButton");
+          this.output = document.getElementById("output");
+          this.status = document.getElementById("status");
+          this.errorMessage = document.getElementById("errorMessage");
+
+          this.init();
+        }
+
+        init() {
+          // Check for browser compatibility
+          if (!this.checkCompatibility()) {
+            return;
+          }
+
+          this.setupSpeechRecognition();
+          this.setupEventListeners();
+        }
+
+        checkCompatibility() {
+          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+          if (!SpeechRecognition) {
+            this.showError("Speech Recognition is not supported in this browser. Please use Chrome, Edge, or Safari.");
+            return false;
+          }
+
+          if (!this.synthesis) {
+            this.showError("Speech Synthesis is not supported in this browser.");
+            return false;
+          }
+
+          return true;
+        }
+
+        setupSpeechRecognition() {
+          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          this.recognition = new SpeechRecognition();
+
+          this.recognition.continuous = true;
+          this.recognition.interimResults = true;
+          this.recognition.lang = "en-US";
+
+          this.recognition.onstart = () => {
+            this.updateStatus("Listening...", "recording");
+          };
+
+          this.recognition.onresult = (event) => {
+            let interimTranscript = "";
+            let finalTranscript = "";
+
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              const transcript = event.results[i][0].transcript;
+
+              if (event.results[i].isFinal) {
+                finalTranscript += transcript;
+              } else {
+                interimTranscript += transcript;
+              }
+            }
+
+            // Update accumulated text with final results
+            if (finalTranscript) {
+              this.accumulatedText += finalTranscript;
+            }
+
+            // Display accumulated text plus interim results
+            this.output.textContent = this.accumulatedText + interimTranscript;
+          };
+
+          this.recognition.onerror = (event) => {
+            console.error("Speech recognition error:", event.error);
+            this.showError(`Speech recognition error: ${event.error}`);
+            this.stopRecording();
+          };
+
+          this.recognition.onend = () => {
+            if (this.isRecording) {
+              // If we're still supposed to be recording, restart recognition
+              try {
+                this.recognition.start();
+              } catch (error) {
+                console.error("Error restarting recognition:", error);
+              }
+            }
+          };
+        }
+
+        setupEventListeners() {
+          // Mouse events for button
+          this.recordButton.addEventListener("mousedown", (e) => {
+            e.preventDefault();
+            this.startRecording();
+          });
+
+          this.recordButton.addEventListener("mouseup", () => {
+            this.stopRecording();
+          });
+
+          this.recordButton.addEventListener("mouseleave", () => {
+            this.stopRecording();
+          });
+
+          // Touch events for mobile
+          this.recordButton.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            this.startRecording();
+          });
+
+          this.recordButton.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            this.stopRecording();
+          });
+
+          // Keyboard events for spacebar
+          document.addEventListener("keydown", (e) => {
+            if (e.code === "Space" && !this.isRecording) {
+              e.preventDefault();
+              this.startRecording();
+            }
+          });
+
+          document.addEventListener("keyup", (e) => {
+            if (e.code === "Space" && this.isRecording) {
+              e.preventDefault();
+              this.stopRecording();
+            }
+          });
+        }
+
+        startRecording() {
+          if (this.isRecording) return;
+
+          this.isRecording = true;
+          this.accumulatedText = ""; // Clear text for new recording
+          this.output.textContent = "";
+          this.recordButton.classList.add("recording");
+          this.recordButton.textContent = "🔴 Recording...";
+
+          try {
+            this.recognition.start();
+          } catch (error) {
+            console.error("Error starting recognition:", error);
+            this.showError("Failed to start speech recognition");
+            this.stopRecording();
+          }
+        }
+
+        stopRecording() {
+          if (!this.isRecording) return;
+
+          this.isRecording = false;
+          this.recordButton.classList.remove("recording");
+          this.recordButton.textContent = "🎤 Hold to Record";
+
+          this.recognition.stop();
+
+          // Play back the accumulated text
+          if (this.accumulatedText.trim()) {
+            this.playback(this.accumulatedText);
+          } else {
+            this.updateStatus("No speech detected", "");
+          }
+        }
+
+        playback(text) {
+          this.updateStatus("Playing back...", "playing");
+
+          // Cancel any ongoing speech
+          this.synthesis.cancel();
+
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.rate = 0.9;
+          utterance.pitch = 1;
+          utterance.volume = 1;
+
+          utterance.onend = () => {
+            this.updateStatus("Ready to record", "");
+          };
+
+          utterance.onerror = (event) => {
+            console.error("Speech synthesis error:", event.error);
+            this.showError(`Playback error: ${event.error}`);
+            this.updateStatus("Ready to record", "");
+          };
+
+          this.synthesis.speak(utterance);
+        }
+
+        updateStatus(message, className) {
+          this.status.textContent = message;
+          this.status.className = "status " + className;
+        }
+
+        showError(message) {
+          this.errorMessage.textContent = message;
+          this.errorMessage.style.display = "block";
+          setTimeout(() => {
+            this.errorMessage.style.display = "none";
+          }, 5000);
+        }
+      }
+
+      // Initialize the app when the page loads
+      document.addEventListener("DOMContentLoaded", () => {
+        new SpeechRecognitionApp();
+      });
+    </script>
+  </body>
+</html>
