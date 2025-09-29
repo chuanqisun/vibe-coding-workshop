@@ -2,10 +2,6 @@
 applyTo: "**/hand-tracking/**"
 ---
 
-## How to use this file
-
-Follow the spec below to implement the app. When user changes the behavior of the app, make sure to update the spec to reflect the latest state of the code. Do NOT describe the change itself.
-
 ## Spec for Hand Tracking Web Application
 
 Build a minimal hand tracking web application using Google MediaPipe served from CDN. Requirements:
