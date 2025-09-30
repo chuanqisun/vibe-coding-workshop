@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Speech Synthesis Demo</title>
+  </head>
+  <body>
+    <h1>Time Travel Radio Demo</h1>
+    <label for="yearSlider">Year:</label>
+    <input type="range" id="yearSlider" min="1900" max="2023" value="2000" />
+    <span id="yearValue">2000</span>
+    <br />
+    <button id="playBtn">Play</button>
+    <button id="stopBtn" disabled>Stop</button>
+    <p id="status">Ready</p>
+
+    <script>
+      // Core variables
+      let speechTimeout;
+      let currentSpeech;
+
+      // Feature detection
+      if (!("speechSynthesis" in window)) {
+        document.getElementById("status").textContent = "Speech synthesis not supported in this browser.";
+      }
+
+      // Get voice settings based on year
+      function getVoiceSettings(year) {
+        if (year < 1950) return { rate: 0.8, pitch: 1.2 };
+        if (year <= 1980) return { rate: 0.9, pitch: 1.1 };
+        return { rate: 1, pitch: 1 };
+      }
+
+      // Speak function
+      function speak(text, year) {
+        currentSpeech = new SpeechSynthesisUtterance(text);
+        const settings = getVoiceSettings(year);
+        currentSpeech.rate = settings.rate;
+        currentSpeech.pitch = settings.pitch;
+
+        currentSpeech.onstart = () => {
+          document.getElementById("status").textContent = "Speaking...";
+          document.getElementById("playBtn").disabled = true;
+          document.getElementById("stopBtn").disabled = false;
+        };
+
+        currentSpeech.onend = () => {
+          document.getElementById("status").textContent = "Finished";
+          resetButtons();
+        };
+
+        speechSynthesis.speak(currentSpeech);
+      }
+
+      // Update content function with debouncing
+      function updateContent(year) {
+        if (currentSpeech) {
+          speechSynthesis.cancel();
+        }
+        clearTimeout(speechTimeout);
+        document.getElementById("yearValue").textContent = year;
+        speechTimeout = setTimeout(() => {
+          const text = `Welcome to the year ${year}. This is a demo of speech synthesis.`;
+          speak(text, year);
+        }, 200);
+      }
+
+      // Stop speech
+      function stopSpeech() {
+        if (currentSpeech) {
+          speechSynthesis.cancel();
+        }
+        resetButtons();
+        document.getElementById("status").textContent = "Stopped";
+      }
+
+      // Reset buttons
+      function resetButtons() {
+        document.getElementById("playBtn").disabled = false;
+        document.getElementById("stopBtn").disabled = true;
+      }
+
+      // Event listeners
+      document.getElementById("yearSlider").addEventListener("input", (e) => {
+        updateContent(e.target.value);
+      });
+
+      document.getElementById("playBtn").addEventListener("click", () => {
+        const year = document.getElementById("yearSlider").value;
+        const text = `Welcome to the year ${year}. This is a demo of speech synthesis.`;
+        speak(text, year);
+      });
+
+      document.getElementById("stopBtn").addEventListener("click", stopSpeech);
+
+      // Keyboard shortcuts
+      document.addEventListener("keydown", (e) => {
+        if (e.ctrlKey && e.key === "Enter") {
+          document.getElementById("playBtn").click();
+        }
+      });
+    </script>
+  </body>
+</html>

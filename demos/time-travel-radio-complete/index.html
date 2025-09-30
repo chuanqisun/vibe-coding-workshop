@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Time Travel Speech Synthesis Demo</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f4f4f4;
+      }
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      .slider-container {
+        margin: 20px 0;
+      }
+      .year-display {
+        font-size: 2em;
+        text-align: center;
+        margin: 10px 0;
+      }
+      .content {
+        margin: 20px 0;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        min-height: 100px;
+      }
+      .controls {
+        text-align: center;
+        margin: 20px 0;
+      }
+      button {
+        margin: 0 10px;
+        padding: 10px 20px;
+        font-size: 1em;
+      }
+      .status {
+        text-align: center;
+        margin: 10px 0;
+        color: #666;
+      }
+      input[type="range"] {
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Time Travel Radio</h1>
+      <div class="slider-container">
+        <input type="range" id="yearSlider" min="1920" max="2025" step="1" value="2000" />
+        <div class="year-display" id="yearDisplay">2000</div>
+      </div>
+      <div class="content" id="contentArea">
+        Welcome to the year 2000! The new millennium brings digital innovation, Y2K concerns, and the rise of the internet.
+      </div>
+      <div class="controls">
+        <button id="playBtn">▶️ Play</button>
+        <button id="stopBtn" disabled>⏹️ Stop</button>
+      </div>
+      <div class="status" id="status">Ready</div>
+    </div>
+
+    <script>
+      const content = {
+        1920: "Welcome to the Roaring Twenties! The Jazz Age is in full swing, prohibition is the law, and women have just won the right to vote.",
+        1930: "The Great Depression grips the nation. Radio shows entertain families, and talking pictures revolutionize cinema.",
+        1940: "World War II rages. Swing music lifts spirits, and resilience defines the era.",
+        1950: "Rock and roll explodes, television enters homes, and suburbia expands.",
+        1960: "Civil rights movements gain momentum, space exploration begins, and The Beatles change music forever.",
+        1970: "Disco fever hits, environmental awareness grows, and early computers emerge.",
+        1980: "MTV launches, neon culture thrives, and personal computers become household items.",
+        1990: "The internet emerges, grunge music dominates, and the world transitions to digital.",
+        2000: "Welcome to the year 2000! The new millennium brings digital innovation, Y2K concerns, and the rise of the internet.",
+        2010: "Social media explodes, smartphones revolutionize communication, and streaming services change entertainment.",
+        2020: "The pandemic era brings remote work, TikTok virality, and global adaptation.",
+      };
+
+      const slider = document.getElementById("yearSlider");
+      const yearDisplay = document.getElementById("yearDisplay");
+      const contentArea = document.getElementById("contentArea");
+      const playBtn = document.getElementById("playBtn");
+      const stopBtn = document.getElementById("stopBtn");
+      const status = document.getElementById("status");
+
+      let speechTimeout;
+      let currentSpeech;
+
+      function getClosestYear(year) {
+        const years = Object.keys(content)
+          .map(Number)
+          .sort((a, b) => a - b);
+        return years.reduce((prev, curr) => (Math.abs(curr - year) < Math.abs(prev - year) ? curr : prev));
+      }
+
+      function getVoiceSettings(year) {
+        if (year < 1950) return { rate: 0.8, pitch: 1.2 };
+        if (year <= 1980) return { rate: 0.9, pitch: 1.1 };
+        return { rate: 1, pitch: 1 };
+      }
+
+      function updateContent(year) {
+        yearDisplay.textContent = year;
+        const closestYear = getClosestYear(year);
+        contentArea.textContent = content[closestYear];
+        status.textContent = "Updating...";
+        resetButtons();
+        if (currentSpeech) {
+          speechSynthesis.cancel();
+        }
+        clearTimeout(speechTimeout);
+        speechTimeout = setTimeout(() => {
+          speak(content[closestYear], year);
+        }, 200);
+      }
+
+      function speak(text, year) {
+        if (!("speechSynthesis" in window)) {
+          status.textContent = "Speech synthesis not supported in this browser.";
+          return;
+        }
+        currentSpeech = new SpeechSynthesisUtterance(text);
+        const settings = getVoiceSettings(year);
+        currentSpeech.rate = settings.rate;
+        currentSpeech.pitch = settings.pitch;
+        currentSpeech.onstart = () => {
+          status.textContent = "Speaking...";
+          playBtn.disabled = true;
+          stopBtn.disabled = false;
+        };
+        currentSpeech.onend = () => {
+          status.textContent = "Finished";
+          resetButtons();
+        };
+        speechSynthesis.speak(currentSpeech);
+      }
+
+      function resetButtons() {
+        playBtn.disabled = false;
+        stopBtn.disabled = true;
+      }
+
+      slider.addEventListener("input", (e) => {
+        updateContent(e.target.value);
+      });
+
+      playBtn.addEventListener("click", () => {
+        const year = slider.value;
+        const closestYear = getClosestYear(year);
+        speak(content[closestYear], year);
+      });
+
+      stopBtn.addEventListener("click", () => {
+        if (currentSpeech) {
+          speechSynthesis.cancel();
+        }
+        resetButtons();
+        status.textContent = "Stopped";
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.ctrlKey && e.key === "Enter") {
+          playBtn.click();
+        }
+      });
+
+      // Initial load
+      updateContent(2000);
+    </script>
+  </body>
+</html>
